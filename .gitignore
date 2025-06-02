@@ -1,0 +1,110 @@
+# Dependencies
+node_modules/
+# package-lock.json is tracked for reproducible builds
+
+# Build outputs (generated, not committed)
+dist/
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# Environment & secrets
+.env*
+!.env.example
+*.key
+*.pem
+*.cert
+auth.json
+secrets.json
+
+# OS & IDE files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs & cache
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.eslintcache
+.stylelintcache
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Local development
+.local
+.cache/
+
+# Mac specific
+.AppleDouble
+.LSOverride
+
+# Windows specific
+ehthumbs_db
+Thumbs.db
+Desktop.ini
+
+# Editor directories and files
+.vscode/
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw? 

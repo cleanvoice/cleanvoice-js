@@ -1,0 +1,49 @@
+# Source files (only dist/ should be published)
+src/
+coverage/
+
+# Development & testing files
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+__tests__/
+test/
+tests/
+jest.config.js
+.eslintrc*
+.prettierrc*
+tsconfig*.json
+
+# Documentation that shouldn't be in the package
+RELEASE_GUIDE.md
+CHANGELOG.md
+
+# Development environment
+.env*
+.vscode/
+.idea/
+
+# Git & CI
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and cache
+*.log
+.eslintcache
+.npm
+node_modules/
+
+# Build artifacts that aren't needed
+*.tsbuildinfo
+*.map
+
+# Temporary files
+tmp/
+temp/ 

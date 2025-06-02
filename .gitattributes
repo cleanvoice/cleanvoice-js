@@ -1,0 +1,40 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# TypeScript/JavaScript files
+*.ts text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Ensure Windows batch files retain CRLF line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
+*.tgz binary
+
+# Archive generated files from language-specific
+# ignore lists in various editors
+*.tar linguist-generated=true
+*.zip linguist-generated=true
+dist/* linguist-generated=true
+coverage/* linguist-generated=true 

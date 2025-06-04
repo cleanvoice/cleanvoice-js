@@ -1,5 +1,5 @@
 {
-  "name": "cleanvoice-sdk-nextjs-example",
+  "name": "@cleanvoice/cleanvoice-sdk-nextjs-example",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "cleanvoice-sdk": "^1.1.0",
+    "@cleanvoice/cleanvoice-sdk": "^1.1.1",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

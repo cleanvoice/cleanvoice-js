@@ -72,8 +72,8 @@ npm run release:alpha
 
 Users install with:
 ```bash
-npm install cleanvoice-sdk@beta
-npm install cleanvoice-sdk@alpha
+npm install @cleanvoice/cleanvoice-sdk@beta
+npm install @cleanvoice/cleanvoice-sdk@alpha
 ```
 
 ## 📝 **Release Process**
@@ -175,22 +175,12 @@ npm version minor --no-git-tag-version
 npm version major --no-git-tag-version
 
 # View published versions
-npm view cleanvoice-sdk versions --json
+npm view @cleanvoice/cleanvoice-sdk versions --json
 
 # Install specific version
-npm install cleanvoice-sdk@1.0.0
+npm install @cleanvoice/cleanvoice-sdk@1.1.1
 ```
 
 ## 🔒 **Security Considerations**
 
-- Never commit `.env` files or API keys
-- Review dependencies for vulnerabilities: `npm audit`
-- Use `npm publish --dry-run` to test before actual publish
-- Consider using `--tag` for pre-releases to avoid accidental installs
-
-## 📈 **Post-Release**
-
-1. **Monitor**: Check npm download stats
-2. **Support**: Watch for issues on GitHub
-3. **Communicate**: Announce major releases
-4. **Document**: Update examples if needed 
+- Never commit `.env`

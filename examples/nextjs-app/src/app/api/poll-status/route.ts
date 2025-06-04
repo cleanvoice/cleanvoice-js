@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Cleanvoice } from "cleanvoice-sdk";
+import { Cleanvoice } from "@cleanvoice/cleanvoice-sdk";
 
 export async function POST(request: NextRequest) {
   try {

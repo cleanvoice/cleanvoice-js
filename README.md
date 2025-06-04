@@ -2,7 +2,7 @@
 
 Official TypeScript SDK for [Cleanvoice AI](https://cleanvoice.ai) - AI-powered audio processing and enhancement.
 
-[![npm version](https://badge.fury.io/js/cleanvoice-sdk.svg)](https://badge.fury.io/js/cleanvoice-sdk)
+[![npm version](https://badge.fury.io/js/@cleanvoice%2Fcleanvoice-sdk.svg)](https://badge.fury.io/js/@cleanvoice%2Fcleanvoice-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -19,13 +19,13 @@ Official TypeScript SDK for [Cleanvoice AI](https://cleanvoice.ai) - AI-powered 
 ## Installation
 
 ```bash
-npm install cleanvoice-sdk
+npm install @cleanvoice/cleanvoice-sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -73,7 +73,7 @@ Process an audio or video file with AI enhancement.
 **Returns:** `Promise<ProcessResult>`
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -121,7 +121,7 @@ console.log(result.transcript?.summary); // AI summary
 Create an edit job without waiting for completion.
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -140,7 +140,7 @@ console.log('Edit ID:', editId);
 Get the status and results of an edit job.
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -160,7 +160,7 @@ if (edit.status === 'SUCCESS') {
 Verify API authentication and get account information.
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -265,7 +265,7 @@ interface ProcessResult {
 ### Basic Audio Cleaning
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -288,7 +288,7 @@ console.log(`Removed ${audio.statistics.FILLER_SOUND} filler sounds`);
 ### Transcription and Summary
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -311,7 +311,7 @@ console.log('Chapters:', transcript?.chapters);
 ### Video Processing
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -333,7 +333,7 @@ console.log('Processed audio:', result.audio.url);
 ### Batch Processing
 
 ```typescript
-import { Cleanvoice } from 'cleanvoice-sdk';
+import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 
@@ -391,7 +391,7 @@ npm run dev
 ## Error Handling
 
 ```typescript
-import { Cleanvoice, ApiError } from 'cleanvoice-sdk';
+import { Cleanvoice, ApiError } from '@cleanvoice/cleanvoice-sdk';
 
 const cv = new Cleanvoice({ 
   apiKey: process.env.CLEANVOICE_API_KEY! 

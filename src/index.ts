@@ -1,19 +1,11 @@
 /**
- * Cleanvoice SDK - Official TypeScript SDK for Cleanvoice AI
+ * Official TypeScript SDK for Cleanvoice AI - AI-powered audio processing
  * 
  * @example
- * ```typescript
- * import { Cleanvoice } from 'cleanvoice-sdk';
+ * import { Cleanvoice } from '@cleanvoice/cleanvoice-sdk';
  * 
- * const cv = new Cleanvoice({ apiKey: process.env.CLEANVOICE_KEY! });
- * 
- * const { audio, transcript } = await cv.process(
- *   "https://example.com/audio.mp3",
- *   { fillers: true, normalize: true, transcription: true, summarize: true }
- * );
- * 
- * console.log(transcript.summary);
- * ```
+ * const cv = new Cleanvoice({ apiKey: 'your-api-key' });
+ * const result = await cv.process('audio-url', { fillers: true });
  */
 
 // Main SDK class

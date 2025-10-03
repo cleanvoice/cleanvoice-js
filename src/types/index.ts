@@ -23,13 +23,13 @@ export interface ProcessingConfig {
   /** Avoids removing or editing sections with music */
   keep_music?: boolean;
   /** Reduce the loudness of breath sounds */
-  breath?: boolean;
+  breath?: boolean | string;
   /** Normalize audio levels */
   normalize?: boolean;
   /** Apply automatic EQ adjustments (Legacy) */
   autoeq?: boolean;
-  /** An AI-powered sound studio enhancer */
-  sound_studio?: boolean;
+  /** Studio sound algorithm selection */
+  studio_sound?: string | boolean;
   /** Loudness level (in LUFS) below which segments are muted */
   mute_lufs?: number;
   /** Target loudness level (in LUFS) for the audio */

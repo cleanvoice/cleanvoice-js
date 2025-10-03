@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 			normalize: true,
 			transcription: true,
 			summarize: true,
-			sound_studio: true,
+			studio_sound: true,
 		};
 
     const apiKey = process.env.CLEANVOICE_API_KEY;

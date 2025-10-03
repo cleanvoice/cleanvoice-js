@@ -181,11 +181,11 @@ console.log('Account info:', account);
 | `long_silences` | boolean | false | Remove long silences |
 | `mouth_sounds` | boolean | false | Remove mouth sounds |
 | `hesitations` | boolean | false | Remove hesitations |
-| `breath` | boolean | false | Reduce breath sounds |
+| `breath` | boolean \| string | false | Reduce breath sounds ("natural", "legacy", "muted") |
 | `remove_noise` | boolean | true | Remove background noise |
 | `keep_music` | boolean | false | Preserve music sections |
 | `normalize` | boolean | false | Normalize audio levels |
-| `sound_studio` | boolean | false | AI-powered enhancement |
+| `studio_sound` | boolean \| string | false | Studio sound algorithm selection ("nightly") |
 
 ### Output Options
 

@@ -5,25 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-10-03
+
+### Changed (Breaking)
+- **BREAKING**: Renamed `sound_studio` configuration option to `studio_sound` to match API expectations
+- **BREAKING**: Extended `studio_sound` configuration option to support string values ("nightly") in addition to boolean
+- Extended `breath` configuration option to support string values ("natural", "legacy", "muted") in addition to boolean
+
 ## [Unreleased]
-
-### Added
-- New features go here
-
-### Changed
-- Changes to existing functionality
-
-### Deprecated
-- Features that will be removed in future versions
-
-### Removed
-- Features removed in this version
-
-### Fixed
-- Bug fixes
-
-### Security
-- Security improvements
 
 ## [1.1.0] - 2024-06-01
 
@@ -68,4 +57,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSDoc documentation on all public APIs
 - Multiple usage examples
 - Batch processing capabilities
-- Proper error handling patterns 
+- Proper error handling patterns

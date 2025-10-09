@@ -52,10 +52,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cleanvoice/cleanvoice-sdk"
+    "url": "https://github.com/cleanvoice/cleanvoice-js"
   },
   "bugs": {
-    "url": "https://github.com/cleanvoice/cleanvoice-sdk/issues"
+    "url": "https://github.com/cleanvoice/cleanvoice-js/issues"
   },
-  "homepage": "https://github.com/cleanvoice/cleanvoice-sdk#readme"
+  "homepage": "https://github.com/cleanvoice/cleanvoice-js#readme"
 }

@@ -1,6 +1,6 @@
 # Cleanvoice SDK Next.js Example
 
-This is a comprehensive example application demonstrating how to use the Cleanvoice SDK with Next.js. It includes multiple examples for different use cases including basic audio cleaning, batch processing, video processing, and transcription with AI summaries.
+This example application shows how to use the Cleanvoice SDK from secure server-side Next.js routes. It includes basic processing, batch flows, video handling, and transcription with summaries.
 
 ## Features
 
@@ -15,19 +15,21 @@ This is a comprehensive example application demonstrating how to use the Cleanvo
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
+
+This example is configured to use the SDK from the workspace root via `file:../..`, so it always exercises the current local SDK code.
 
 ### 2. Configure Environment Variables
 
 Copy the example environment file and add your Cleanvoice API key:
 
+```bash
+cp .env.local.example .env.local
+```
+
 Edit `.env.local` and add your actual API key:
 
-```
+```bash
 CLEANVOICE_API_KEY=your_actual_api_key_here
 ```
 
@@ -37,10 +39,6 @@ CLEANVOICE_API_KEY=your_actual_api_key_here
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
@@ -51,7 +49,7 @@ The application includes several API routes that handle server-side communicatio
 
 - `/api/create-edit` - Creates a new audio processing job
 - `/api/poll-status` - Checks the status of a processing job
-- `/api/process-audio` - Direct audio processing (alternative to create-edit + polling)
+- `/api/process-audio` - Runs the full process-and-wait flow
 - `/api/batch-process` - Creates multiple processing jobs
 - `/api/batch-status` - Checks status of multiple jobs
 

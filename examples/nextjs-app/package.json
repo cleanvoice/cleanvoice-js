@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@cleanvoice/cleanvoice-sdk": "^1.1.1",
+    "@cleanvoice/cleanvoice-sdk": "file:../..",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

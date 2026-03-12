@@ -5,14 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [3.0.0] - 2026-03-12
+
+### Added
+- `Cleanvoice.fromEnv()` convenience constructor for Node/server runtimes.
+- Local file upload support with `uploadFile()` and automatic upload in `process()` / `createEdit()`.
+- Download helpers via `downloadFile()`, `result.audio.download(...)`, and `processAndDownload()`.
+- Public polling/progress options for `process()`.
+- Request options for `templateId` and `uploadType`.
+- A minimal Node example in `examples/node-basic.js`.
+
+### Changed
+- `process()` result shaping now preserves more API metadata including video state, social content, timestamps, waveform data, and task IDs.
+- Polling and transport behavior is more resilient to transient failures and delayed success payloads.
+- README and example docs were refreshed to match the current SDK behavior.
+- The Next.js example now references the local workspace SDK and includes `.env.local.example`.
+
+### Changed (Breaking)
+- `checkAuth()` now returns only the public `credit` payload and no longer exposes backend `meta` fields in the SDK response.
+
+### Testing
+- Expanded Jest coverage for config normalization, typed errors, upload/download helpers, progress callbacks, retries, and result transformations.
+
 ## [2.0.0] - 2025-10-03
 
 ### Changed (Breaking)
 - **BREAKING**: Renamed `sound_studio` configuration option to `studio_sound` to match API expectations
 - **BREAKING**: Extended `studio_sound` configuration option to support string values ("nightly") in addition to boolean
 - Extended `breath` configuration option to support string values ("natural", "legacy", "muted") in addition to boolean
-
-## [Unreleased]
 
 ## [1.1.0] - 2024-06-01
 

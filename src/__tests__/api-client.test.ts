@@ -1,241 +1,242 @@
 import axios, { AxiosError } from 'axios';
-import { ApiClient } from '../client/api-client';
+import { ApiClient, isTransientApiError } from '../client/api-client';
+import { ApiError } from '../types';
 
-// Mock axios
 jest.mock('axios');
+
 const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+function createAxiosError(
+  overrides: Partial<AxiosError> = {},
+  config: Partial<AxiosError['config']> = {}
+): AxiosError {
+  return {
+    name: 'AxiosError',
+    message: 'Request failed',
+    config: {
+      headers: {},
+      ...config,
+    },
+    isAxiosError: true,
+    toJSON: () => ({}),
+    ...overrides,
+  } as AxiosError;
+}
 
 describe('ApiClient', () => {
   let apiClient: ApiClient;
-  let mockAxiosInstance: jest.Mocked<any>;
+  let mockRequestClient: { request: jest.Mock };
+  let mockUploadClient: { put: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Mock axios instance
-    mockAxiosInstance = {
-      get: jest.fn(),
-      post: jest.fn(),
-      interceptors: {
-        response: {
-          use: jest.fn(),
-        },
-      },
+    jest.useRealTimers();
+
+    mockRequestClient = {
+      request: jest.fn(),
+    };
+    mockUploadClient = {
+      put: jest.fn(),
     };
 
-    mockedAxios.create.mockReturnValue(mockAxiosInstance);
+    mockedAxios.create
+      .mockReturnValueOnce(mockRequestClient as never)
+      .mockReturnValueOnce(mockUploadClient as never);
+    mockedAxios.isAxiosError.mockImplementation(
+      (value: unknown): value is AxiosError => Boolean((value as AxiosError)?.isAxiosError)
+    );
 
     apiClient = new ApiClient({
       apiKey: 'test-api-key',
     });
   });
 
-  describe('constructor', () => {
-    it('should create axios instance with default config', () => {
-      expect(mockedAxios.create).toHaveBeenCalledWith({
-        baseURL: 'https://api.cleanvoice.ai/v2',
-        timeout: 30000,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': 'test-api-key',
-        },
-      });
+  it('creates axios instances with expected defaults', () => {
+    expect(mockedAxios.create).toHaveBeenNthCalledWith(1, {
+      baseURL: 'https://api.cleanvoice.ai/v2',
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'test-api-key',
+          'User-Agent': 'cleanvoice-js-sdk/3.0.0',
+      },
     });
-
-    it('should create axios instance with custom config', () => {
-      new ApiClient({
-        apiKey: 'custom-key',
-        baseUrl: 'https://custom.api.com',
-        timeout: 60000,
-      });
-
-      expect(mockedAxios.create).toHaveBeenCalledWith({
-        baseURL: 'https://custom.api.com',
-        timeout: 60000,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': 'custom-key',
-        },
-      });
-    });
-
-    it('should set up response interceptor', () => {
-      expect(mockAxiosInstance.interceptors.response.use).toHaveBeenCalled();
+    expect(mockedAxios.create).toHaveBeenNthCalledWith(2, {
+      timeout: 300000,
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+      headers: {
+        'User-Agent': 'cleanvoice-js-sdk/3.0.0',
+      },
     });
   });
 
-  describe('checkAuth', () => {
-    it('should call account endpoint and return data', async () => {
-      const mockAccountData = { user: 'test', credits: 100 };
-      mockAxiosInstance.get.mockResolvedValue({ data: mockAccountData });
-
-      const result = await apiClient.checkAuth();
-
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/account');
-      expect(result).toEqual(mockAccountData);
+  it('routes auth requests to the v1 base URL', async () => {
+    mockRequestClient.request.mockResolvedValue({
+      data: {
+        credit: {
+          total: 100,
+          subscription: 25,
+          payg: 75,
+        },
+        meta: {
+          send_email: true,
+        },
+      },
     });
 
-    it('should throw error on request failure', async () => {
-      const error = new Error('Network error');
-      mockAxiosInstance.get.mockRejectedValue(error);
+    const result = await apiClient.checkAuth();
 
-      await expect(apiClient.checkAuth()).rejects.toThrow('Network error');
+    expect(mockRequestClient.request).toHaveBeenCalledWith({
+      method: 'GET',
+      url: '/account',
+      baseURL: 'https://api.cleanvoice.ai/v1',
+    });
+    expect(result).toEqual({
+      credit: {
+        total: 100,
+        subscription: 25,
+        payg: 75,
+      },
     });
   });
 
-  describe('createEdit', () => {
+  it('creates edits via the shared request pipeline', async () => {
     const mockRequest = {
       input: {
         files: ['https://example.com/audio.mp3'],
         config: { fillers: true },
       },
     };
+    mockRequestClient.request.mockResolvedValue({ data: { id: 'edit-123' } });
 
-    it('should create edit and return response', async () => {
-      const mockResponse = { id: 'edit-123' };
-      mockAxiosInstance.post.mockResolvedValue({ data: mockResponse });
+    const result = await apiClient.createEdit(mockRequest);
 
-      const result = await apiClient.createEdit(mockRequest);
-
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/edits', mockRequest);
-      expect(result).toEqual(mockResponse);
+    expect(mockRequestClient.request).toHaveBeenCalledWith({
+      method: 'POST',
+      url: '/edits',
+      data: mockRequest,
     });
-
-    it('should throw error on request failure', async () => {
-      const error = new Error('API error');
-      mockAxiosInstance.post.mockRejectedValue(error);
-
-      await expect(apiClient.createEdit(mockRequest)).rejects.toThrow('API error');
-    });
+    expect(result).toEqual({ id: 'edit-123' });
   });
 
-  describe('retrieveEdit', () => {
-    it('should retrieve edit status and return response', async () => {
-      const mockResponse = {
-        status: 'SUCCESS' as const,
-        task_id: 'task-123',
-        result: {
-          video: false,
-          filename: 'test.mp3',
-          statistics: {},
-          download_url: 'https://example.com/test.mp3',
-          social_content: [],
-          merged_audio_url: [],
-          timestamps_markers_urls: [],
+  it('retries retryable HTTP failures before succeeding', async () => {
+    jest.useFakeTimers();
+    mockRequestClient.request
+      .mockRejectedValueOnce(
+        createAxiosError({
+          response: {
+            status: 503,
+            data: { message: 'busy' },
+          } as never,
+        })
+      )
+      .mockResolvedValueOnce({ data: { id: 'edit-123' } });
+
+    const promise = apiClient.createEdit({
+      input: {
+        files: ['https://example.com/audio.mp3'],
+        config: {},
+      },
+    });
+
+    await jest.advanceTimersByTimeAsync(500);
+    await expect(promise).resolves.toEqual({ id: 'edit-123' });
+    expect(mockRequestClient.request).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries retryable transport failures on idempotent requests', async () => {
+    jest.useFakeTimers();
+    mockRequestClient.request
+      .mockRejectedValueOnce(
+        createAxiosError({
+          code: 'ECONNRESET',
+          request: {},
+        })
+      )
+      .mockResolvedValueOnce({
+        data: {
+          status: 'SUCCESS',
+          task_id: 'task-123',
+          result: {
+            video: false,
+            filename: 'test.mp3',
+            statistics: {},
+            download_url: 'https://example.com/test.mp3',
+          },
         },
-      };
-      
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+      });
 
-      const result = await apiClient.retrieveEdit('edit-123');
+    const promise = apiClient.retrieveEdit('edit-123');
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/edits/edit-123');
-      expect(result).toEqual(mockResponse);
-    });
-
-    it('should throw error on request failure', async () => {
-      const error = new Error('Not found');
-      mockAxiosInstance.get.mockRejectedValue(error);
-
-      await expect(apiClient.retrieveEdit('edit-123')).rejects.toThrow('Not found');
+    await jest.advanceTimersByTimeAsync(500);
+    await expect(promise).resolves.toEqual({
+      status: 'SUCCESS',
+      task_id: 'task-123',
+      result: {
+        video: false,
+        filename: 'test.mp3',
+        statistics: {},
+        download_url: 'https://example.com/test.mp3',
+      },
     });
   });
 
-  describe('error handling', () => {
-    let errorHandler: (error: AxiosError) => Promise<never>;
-
-    beforeEach(() => {
-      // Extract the error handler from the interceptor call
-      const interceptorCall = mockAxiosInstance.interceptors.response.use.mock.calls[0];
-      errorHandler = interceptorCall[1];
-    });
-
-    it('should handle HTTP error responses', async () => {
-      const axiosError = {
+  it('returns structured ApiError instances for HTTP failures', async () => {
+    mockRequestClient.request.mockRejectedValue(
+      createAxiosError({
         response: {
           status: 401,
           data: { message: 'Unauthorized' },
-        },
-      } as AxiosError;
+        } as never,
+      })
+    );
 
-      const result = errorHandler(axiosError);
-
-      await expect(result).rejects.toEqual({
+    await expect(apiClient.retrieveEdit('edit-123')).rejects.toEqual(
+      expect.objectContaining({
+        name: 'ApiError',
         message: 'Unauthorized',
         status: 401,
         code: 'HTTP_401',
-      });
+      })
+    );
+  });
+
+  it('returns signed upload URLs', async () => {
+    mockRequestClient.request.mockResolvedValue({
+      data: { signedUrl: 'https://upload.example.com/file.mp3?signature=abc' },
     });
 
-    it('should handle HTTP error with different error format', async () => {
-      const axiosError = {
-        response: {
-          status: 400,
-          data: { error: 'Bad request' },
-        },
-      } as AxiosError;
+    const result = await apiClient.getSignedUploadUrl('file.mp3');
 
-      const result = errorHandler(axiosError);
-
-      await expect(result).rejects.toEqual({
-        message: 'Bad request',
-        status: 400,
-        code: 'HTTP_400',
-      });
-    });
-
-    it('should handle HTTP error with no message', async () => {
-      const axiosError = {
-        response: {
-          status: 500,
-          data: {},
-        },
-      } as AxiosError;
-
-      const result = errorHandler(axiosError);
-
-      await expect(result).rejects.toEqual({
-        message: 'An API error occurred',
-        status: 500,
-        code: 'HTTP_500',
-      });
-    });
-
-    it('should handle network errors', async () => {
-      const axiosError = {
-        request: {},
-      } as AxiosError;
-
-      const result = errorHandler(axiosError);
-
-      await expect(result).rejects.toEqual({
-        message: 'Network error: No response from server',
-        code: 'NETWORK_ERROR',
-      });
-    });
-
-    it('should handle unknown errors', async () => {
-      const axiosError = {
-        message: 'Something went wrong',
-      } as AxiosError;
-
-      const result = errorHandler(axiosError);
-
-      await expect(result).rejects.toEqual({
-        message: 'Something went wrong',
-        code: 'UNKNOWN_ERROR',
-      });
-    });
-
-    it('should handle errors without message', async () => {
-      const axiosError = {} as AxiosError;
-
-      const result = errorHandler(axiosError);
-
-      await expect(result).rejects.toEqual({
-        message: 'Unknown error occurred',
-        code: 'UNKNOWN_ERROR',
-      });
+    expect(result).toBe('https://upload.example.com/file.mp3?signature=abc');
+    expect(mockRequestClient.request).toHaveBeenCalledWith({
+      method: 'POST',
+      url: '/upload?filename=file.mp3',
     });
   });
-}); 
+
+  it('uploads files to signed URLs', async () => {
+    mockUploadClient.put.mockResolvedValue({ status: 200 });
+
+    await apiClient.uploadFile(__filename, 'https://upload.example.com/file.mp3?signature=abc');
+
+    const { size } = require('fs').statSync(__filename);
+    expect(mockUploadClient.put).toHaveBeenCalledWith(
+      'https://upload.example.com/file.mp3?signature=abc',
+      expect.anything(),
+      {
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': String(size),
+        },
+      }
+    );
+  });
+
+  it('classifies transient API errors', () => {
+    expect(isTransientApiError(new ApiError('temporarily unavailable'))).toBe(true);
+    expect(isTransientApiError(new ApiError('Unauthorized', { status: 401 }))).toBe(false);
+    expect(isTransientApiError(new ApiError('Busy', { status: 503 }))).toBe(true);
+  });
+});

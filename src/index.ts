@@ -8,14 +8,17 @@
  * const result = await cv.process('audio-url', { fillers: true });
  */
 
-// Main SDK class
 export { Cleanvoice } from './cleanvoice';
+export { ApiError } from './types';
 
-// All types including the new progress types
 export type {
+  AccountInfo,
+  CreditInfo,
   CleanvoiceConfig,
   ProcessingConfig,
   ProcessResult,
+  ProcessOptions,
+  EditOptions,
   EditStatus,
   EditStatistics,
   Chapter,
@@ -27,20 +30,25 @@ export type {
   Transcription,
   EditResult,
   RetrieveEditResponse,
-  ApiError,
   ProcessingProgress,
   ProgressCallback,
+  ProgressCallbackData,
   PollingConfig,
+  DownloadableMedia,
+  TranscriptResult,
+  TimestampMarkers,
 } from './types';
 
-// Utility functions that might be useful for developers
 export {
+  downloadFile,
   isUrl,
   isValidAudioFile,
   isValidVideoFile,
   isValidMediaFile,
+  resolveDownloadDestination,
+  signedUrlToPublicUrl,
+  uploadLocalFile,
 } from './utils/file-handler';
 
-// Default export for convenience
 import { Cleanvoice } from './cleanvoice';
 export default Cleanvoice; 

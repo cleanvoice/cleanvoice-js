@@ -1,6 +1,11 @@
-import { promises as fs } from 'fs';
-import { extname } from 'path';
-import { ProcessingConfig } from '../types';
+import axios from 'axios';
+import { createWriteStream, promises as fs } from 'fs';
+import { basename, extname } from 'path';
+import { finished } from 'stream/promises';
+import {
+  ApiError,
+  ProcessingConfig,
+} from '../types';
 
 /**
  * Supported audio file extensions
@@ -26,6 +31,23 @@ const SUPPORTED_VIDEO_EXTENSIONS = [
   '.avi',
   '.mkv',
 ];
+
+type UploadCapableClient = {
+  getSignedUploadUrl(filename: string): Promise<string>;
+  uploadFile(filePath: string, signedUrl: string): Promise<void>;
+};
+
+function getPathExtension(input: string): string {
+  if (isUrl(input)) {
+    try {
+      return extname(new URL(input).pathname).toLowerCase();
+    } catch {
+      return '';
+    }
+  }
+
+  return extname(input).toLowerCase();
+}
 
 /**
  * Check if a string is a valid URL
@@ -55,7 +77,7 @@ export async function fileExists(filePath: string): Promise<boolean> {
  * Validate if file extension is supported
  */
 export function isValidAudioFile(filePath: string): boolean {
-  const ext = extname(filePath).toLowerCase();
+  const ext = getPathExtension(filePath);
   return SUPPORTED_AUDIO_EXTENSIONS.includes(ext);
 }
 
@@ -63,7 +85,7 @@ export function isValidAudioFile(filePath: string): boolean {
  * Validate if file extension is a supported video format
  */
 export function isValidVideoFile(filePath: string): boolean {
-  const ext = extname(filePath).toLowerCase();
+  const ext = getPathExtension(filePath);
   return SUPPORTED_VIDEO_EXTENSIONS.includes(ext);
 }
 
@@ -75,24 +97,51 @@ export function isValidMediaFile(filePath: string): boolean {
 }
 
 /**
- * Normalize file input to URL format
- * For local files, this would require upload functionality
+ * Strip query params from a signed upload URL.
  */
-export async function normalizeFileInput(input: string): Promise<string> {
-  // If it's already a URL, return as-is
-  if (isUrl(input)) {
-    return input;
+export function signedUrlToPublicUrl(signedUrl: string): string {
+  const parsed = new URL(signedUrl);
+  parsed.search = '';
+  parsed.hash = '';
+  return parsed.toString();
+}
+
+/**
+ * Resolve the output path for a download.
+ */
+export function resolveDownloadDestination(
+  url: string,
+  destination?: string,
+  defaultFilename: string = 'downloaded_audio.mp3'
+): string {
+  if (destination) {
+    return destination;
   }
 
-  // Check if local file exists
-  const exists = await fileExists(input);
+  try {
+    const parsed = new URL(url);
+    const inferredFilename = basename(parsed.pathname);
+    return inferredFilename || defaultFilename;
+  } catch {
+    return defaultFilename;
+  }
+}
+
+/**
+ * Upload a local file and return the resulting public URL.
+ */
+export async function uploadLocalFile(
+  filePath: string,
+  apiClient: UploadCapableClient,
+  filename?: string
+): Promise<string> {
+  const exists = await fileExists(filePath);
   if (!exists) {
-    throw new Error(`File does not exist: ${input}`);
+    throw new ApiError(`File does not exist: ${filePath}`);
   }
 
-  // Validate file type
-  if (!isValidMediaFile(input)) {
-    throw new Error(
+  if (!isValidMediaFile(filePath)) {
+    throw new ApiError(
       `Unsupported file format. Supported formats: ${[
         ...SUPPORTED_AUDIO_EXTENSIONS,
         ...SUPPORTED_VIDEO_EXTENSIONS,
@@ -100,38 +149,101 @@ export async function normalizeFileInput(input: string): Promise<string> {
     );
   }
 
-  // For now, throw an error as we haven't implemented file upload
-  // In a production SDK, this would upload the file and return the URL
-  throw new Error(
-    'Local file upload not yet implemented. Please provide a URL to your audio file.'
-  );
+  const uploadFilename = filename || basename(filePath);
+  const signedUrl = await apiClient.getSignedUploadUrl(uploadFilename);
+  await apiClient.uploadFile(filePath, signedUrl);
+  return signedUrlToPublicUrl(signedUrl);
+}
+
+/**
+ * Normalize file input to URL format.
+ */
+export async function normalizeFileInput(
+  input: string,
+  apiClient?: UploadCapableClient
+): Promise<string> {
+  if (isUrl(input)) {
+    return input;
+  }
+
+  const exists = await fileExists(input);
+  if (!exists) {
+    throw new ApiError(`File does not exist: ${input}`);
+  }
+
+  if (!isValidMediaFile(input)) {
+    throw new ApiError(
+      `Unsupported file format. Supported formats: ${[
+        ...SUPPORTED_AUDIO_EXTENSIONS,
+        ...SUPPORTED_VIDEO_EXTENSIONS,
+      ].join(', ')}`
+    );
+  }
+
+  if (!apiClient) {
+    throw new ApiError(
+      'Local file uploads require a Cleanvoice API client. Pass a client when normalizing local paths.'
+    );
+  }
+
+  return uploadLocalFile(input, apiClient);
+}
+
+/**
+ * Download a file from a URL to the local filesystem.
+ */
+export async function downloadFile(
+  url: string,
+  destination?: string
+): Promise<string> {
+  if (!isUrl(url)) {
+    throw new ApiError(`Invalid URL: ${url}`);
+  }
+
+  const outputPath = resolveDownloadDestination(url, destination);
+
+  try {
+    const response = await axios.get<NodeJS.ReadableStream>(url, {
+      responseType: 'stream',
+      timeout: 300000,
+    });
+    const stream = createWriteStream(outputPath);
+
+    response.data.pipe(stream);
+    await finished(stream);
+
+    return outputPath;
+  } catch (error) {
+    await fs.unlink(outputPath).catch(() => undefined);
+
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
+    const message = error instanceof Error ? error.message : 'Unknown download error';
+    throw new ApiError(`File download failed: ${message}`);
+  }
 }
 
 /**
  * Validate processing configuration
  */
 export function validateConfig(config: ProcessingConfig): void {
+  if (config.sound_studio !== undefined && config.studio_sound !== undefined) {
+    throw new ApiError('Provide only one of sound_studio or studio_sound');
+  }
+
   // Check mute_lufs is negative if provided
   if (config.mute_lufs !== undefined) {
     if (config.mute_lufs > 0) {
-      throw new Error('mute_lufs must be a negative number or 0');
+      throw new ApiError('mute_lufs must be a negative number or 0');
     }
   }
 
   // Check target_lufs is negative if provided
   if (config.target_lufs !== undefined) {
     if (config.target_lufs >= 0) {
-      throw new Error('target_lufs must be less than 0');
+      throw new ApiError('target_lufs must be less than 0');
     }
   }
-
-  // Summarize requires transcription
-  if (config.summarize === true && config.transcription !== true) {
-    throw new Error('summarize requires transcription to be true');
-  }
-
-  // Social content requires summarize
-  if (config.social_content === true && config.summarize !== true) {
-    throw new Error('social_content requires summarize to be true');
-  }
-} 
+}

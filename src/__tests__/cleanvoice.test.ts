@@ -20,7 +20,11 @@ const successResponse = {
     filename: 'processed.mp3',
     statistics: { FILLER_SOUND: 5, BREATH: 10 },
     download_url: 'https://example.com/processed.mp3',
-    social_content: ['clip'],
+    social_content: {
+      newsletter: 'Newsletter copy',
+      twitter_thread: 'Twitter thread',
+      linkedin: 'LinkedIn post',
+    },
     merged_audio_url: ['https://example.com/alt.mp3'],
     timestamps_markers_urls: ['https://example.com/timestamps.json'],
     waveform_result: { peaks: [1, 2, 3] },
@@ -133,7 +137,11 @@ describe('Cleanvoice SDK', () => {
     });
     expect(result.audio.url).toBe('https://example.com/processed.mp3');
     expect(result.media.mergedAudioUrl).toEqual(['https://example.com/alt.mp3']);
-    expect(result.socialContent).toEqual(['clip']);
+    expect(result.socialContent).toEqual({
+      newsletter: 'Newsletter copy',
+      twitter_thread: 'Twitter thread',
+      linkedin: 'LinkedIn post',
+    });
   });
 
   it('adds transcript and summarization data to the process result', async () => {
@@ -230,6 +238,87 @@ describe('Cleanvoice SDK', () => {
       expect.objectContaining({
         status: 'STARTED',
         attempt: 1,
+        editId: 'edit-123',
+      })
+    );
+    expect(result.audio.filename).toBe('processed.mp3');
+  });
+
+  it('accepts worker phase statuses while polling', async () => {
+    jest.useFakeTimers();
+    const onProgress = jest.fn();
+    const cv = new Cleanvoice({ apiKey: 'test-key' });
+    mockApiClient.createEdit.mockResolvedValue({ id: 'edit-123' });
+    mockApiClient.retrieveEdit
+      .mockResolvedValueOnce({
+        status: 'PREPROCESSING',
+        task_id: 'task-123',
+        result: {
+          done: 10,
+          total: 100,
+          state: 'PREPROCESSING',
+          phase: 0,
+          step: 1,
+          substep: 0,
+          job_name: 'worker',
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 'CLASSIFICATION',
+        task_id: 'task-123',
+        result: {
+          done: 30,
+          total: 100,
+          state: 'CLASSIFICATION',
+          phase: 1,
+          step: 1,
+          substep: 0,
+          job_name: 'worker',
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 'EDITING',
+        task_id: 'task-123',
+        result: {
+          done: 50,
+          total: 100,
+          state: 'EDITING',
+          phase: 2,
+          step: 1,
+          substep: 0,
+          job_name: 'worker',
+        },
+      })
+      .mockResolvedValueOnce(successResponse);
+
+    const promise = cv.process('https://example.com/audio.mp3', {}, {
+      polling: { interval: 10, onProgress },
+    });
+
+    await jest.advanceTimersByTimeAsync(40);
+    const result = await promise;
+
+    expect(onProgress).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        status: 'PREPROCESSING',
+        attempt: 1,
+        editId: 'edit-123',
+      })
+    );
+    expect(onProgress).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        status: 'CLASSIFICATION',
+        attempt: 2,
+        editId: 'edit-123',
+      })
+    );
+    expect(onProgress).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        status: 'EDITING',
+        attempt: 3,
         editId: 'edit-123',
       })
     );

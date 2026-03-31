@@ -3,24 +3,63 @@
 import { useState } from "react";
 import Link from "next/link";
 
+interface Chapter {
+  start: number;
+  title: string;
+}
+
+interface TranscriptParagraph {
+  start: number;
+  end: number;
+  text: string;
+}
+
 interface TranscriptResult {
   text: string;
   summary?: string;
   title?: string;
-  chapters?: Array<{
-    start: number;
-    title: string;
-  }>;
-  paragraphs?: Array<{
-    start: number;
-    end: number;
-    text: string;
-  }>;
+  chapters?: Chapter[];
+  paragraphs?: TranscriptParagraph[];
+}
+
+interface RawTranscriptionResult {
+  paragraphs?: TranscriptParagraph[];
+}
+
+interface RawSummarizationResult {
+  summary?: string;
+  title?: string;
+  chapters?: Chapter[];
+}
+
+interface RawEditResult {
+  transcription?: RawTranscriptionResult | [];
+  summarization?: RawSummarizationResult | [];
 }
 
 interface ProgressState {
   stage: string;
   progress: number;
+}
+
+function buildTranscriptResult(result?: RawEditResult): TranscriptResult | null {
+  if (!result || !result.transcription || Array.isArray(result.transcription)) {
+    return null;
+  }
+
+  const paragraphs = result.transcription.paragraphs ?? [];
+  const summarization =
+    result.summarization && !Array.isArray(result.summarization)
+      ? result.summarization
+      : undefined;
+
+  return {
+    text: paragraphs.map((paragraph) => paragraph.text).join(" "),
+    paragraphs,
+    summary: summarization?.summary,
+    title: summarization?.title,
+    chapters: summarization?.chapters,
+  };
 }
 
 export default function TranscriptionExample() {
@@ -81,10 +120,7 @@ export default function TranscriptionExample() {
         const data = await pollResponse.json();
         
         if (data.status === 'SUCCESS') {
-          // Extract transcript data from result
-          if (data.result?.transcript) {
-            setTranscript(data.result.transcript);
-          }
+          setTranscript(buildTranscriptResult(data.result));
           setProgress({ stage: "Complete", progress: 100 });
           completed = true;
         } else if (data.status === 'FAILURE') {

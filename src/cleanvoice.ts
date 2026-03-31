@@ -311,7 +311,7 @@ export class Cleanvoice {
       media,
       video: editResult.video,
       isVideo: editResult.video,
-      socialContent: editResult.social_content || [],
+      socialContent: editResult.social_content ?? [],
       taskId: response.task_id,
       downloadAudio: async (outputPath?: string) => media.download(outputPath),
     };

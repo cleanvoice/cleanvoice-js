@@ -50,7 +50,11 @@ export interface CreateEditResponse {
 export type EditStatus =
   | 'FAILURE'
   | 'PENDING'
+  | 'PREPROCESSING'
+  | 'CLASSIFICATION'
+  | 'EDITING'
   | 'POSTPROCESSING'
+  | 'EXPORT'
   | 'PROCESSING'
   | 'QUEUED'
   | 'RETRY'
@@ -78,6 +82,13 @@ export interface Summarization {
   key_learnings: string;
   summary_of_summary: string;
   episode_description: string;
+}
+
+export interface SocialContent {
+  newsletter?: string;
+  twitter_thread?: string;
+  linkedin?: string;
+  [key: string]: string | undefined;
 }
 
 export interface TranscriptionWord {
@@ -119,7 +130,7 @@ export interface EditResult {
   download_url: string;
   summarization?: Summarization | [];
   transcription?: Transcription | [];
-  social_content?: unknown[];
+  social_content?: SocialContent | [];
   merged_audio_url?: string[] | string;
   timestamps_markers_urls?: TimestampMarkers;
   waveform_result?: unknown;
@@ -216,7 +227,7 @@ export interface ProcessResult {
   isVideo: boolean;
   transcript?: TranscriptResult;
   summarization?: Summarization;
-  socialContent: unknown[];
+  socialContent: SocialContent | [];
   timestampsMarkersUrls?: TimestampMarkers;
   waveformResult?: unknown;
   taskId?: string;

@@ -17,7 +17,7 @@ This example application shows how to use the Cleanvoice SDK from secure server-
 npm install
 ```
 
-This example is configured to use the SDK from the workspace root via `file:../..`, so it always exercises the current local SDK code.
+This example installs the latest published `@cleanvoice/cleanvoice-sdk` package from npm.
 
 ### 2. Configure Environment Variables
 

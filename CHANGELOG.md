@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.2] - 2026-04-01
+
+### Fixed
+- Better error handling for failed edits.
+- Safer retry behavior for edit creation.
+- Safer file downloads on failure.
+
 ## [3.0.0] - 2026-03-12
 
 ### Added

@@ -12,7 +12,7 @@ import {
 
 const DEFAULT_V2_BASE_URL = 'https://api.cleanvoice.ai/v2';
 const DEFAULT_V1_BASE_URL = 'https://api.cleanvoice.ai/v1';
-const USER_AGENT = 'cleanvoice-js-sdk/3.0.0';
+const USER_AGENT = 'cleanvoice-js-sdk/3.0.2';
 const DEFAULT_MAX_RETRIES = 3;
 const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
 const NON_IDEMPOTENT_RETRYABLE_STATUS_CODES = new Set([429, 503, 504]);
@@ -84,13 +84,13 @@ export class ApiClient {
     const errorCode = error.code || '';
     const retryableCodes = isIdempotent
       ? new Set(['ECONNABORTED', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ERR_NETWORK'])
-      : new Set(['ECONNABORTED', 'ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT']);
+      : new Set(['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED']);
 
     if (retryableCodes.has(errorCode)) {
       return true;
     }
 
-    return !error.response && Boolean(error.request);
+    return isIdempotent && !error.response && Boolean(error.request);
   }
 
   private handleApiError(error: AxiosError): ApiError {

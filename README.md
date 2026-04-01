@@ -281,6 +281,8 @@ console.log(account.credit.subscription);
 console.log(account.credit.payg);
 ```
 
+The JavaScript SDK returns the public `credit` balances only.
+
 ## Configuration Options
 
 ### Core Processing
@@ -359,16 +361,17 @@ The client retries brief transient transport and HTTP failures during requests a
 
 ## Supported Formats
 
-Audio:
+Remote media URLs:
+
+- `http://`
+- `https://`
+
+Local uploads (audio):
 
 - `.wav`
 - `.mp3`
-- `.ogg`
 - `.flac`
 - `.m4a`
-- `.aiff`
-- `.aac`
-- `.opus`
 
 Video:
 

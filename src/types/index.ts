@@ -148,14 +148,14 @@ export interface ProcessingProgress {
 
 export interface RetrieveEditResponse {
   status: EditStatus;
-  result?: ProcessingProgress | EditResult;
-  task_id: string;
+  result?: ProcessingProgress | EditResult | Record<string, unknown> | null;
+  task_id?: string;
 }
 
 export interface ProgressCallbackData {
   status: EditStatus;
   progress?: ProcessingProgress;
-  result?: ProcessingProgress | EditResult;
+  result?: ProcessingProgress | EditResult | Record<string, unknown> | null;
   editId: string;
   attempt: number;
 }

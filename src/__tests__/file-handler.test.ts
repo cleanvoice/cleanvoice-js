@@ -271,5 +271,18 @@ describe('File Handler Utilities', () => {
 
       await expect(fs.access(outputPath)).rejects.toThrow();
     });
+
+    it('preserves an existing destination file on failure', async () => {
+      const outputPath = join(tmpdir(), `cleanvoice-download-existing-${Date.now()}.mp3`);
+      await fs.writeFile(outputPath, 'original-data');
+      mockedAxios.get.mockRejectedValue(new Error('network down'));
+
+      await expect(
+        downloadFile('https://example.com/audio.mp3', outputPath)
+      ).rejects.toThrow('File download failed: network down');
+
+      await expect(fs.readFile(outputPath, 'utf8')).resolves.toBe('original-data');
+      await fs.unlink(outputPath).catch(() => undefined);
+    });
   });
 });

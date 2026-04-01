@@ -236,7 +236,7 @@ export class Cleanvoice {
       this.emitProgress(pollingConfig, response, editId, attempts + 1);
 
       if (response.status === 'SUCCESS') {
-        if (!response.result || !('download_url' in response.result)) {
+        if (!this.isEditResult(response.result)) {
           missingSuccessResultAttempts += 1;
           if (missingSuccessResultAttempts >= successResultGraceAttempts) {
             throw new ApiError(
@@ -265,15 +265,11 @@ export class Cleanvoice {
   }
 
   private transformResult(response: RetrieveEditResponse): ProcessResult {
-    if (!response.result) {
+    if (!this.isEditResult(response.result)) {
       throw new ApiError('Edit result not available');
     }
 
-    if (!('download_url' in response.result)) {
-      throw new ApiError('Edit is still in progress, cannot transform to final result');
-    }
-
-    const editResult = response.result as EditResult;
+    const editResult = response.result;
     const summarization =
       editResult.summarization && !Array.isArray(editResult.summarization)
         ? editResult.summarization
@@ -312,9 +308,12 @@ export class Cleanvoice {
       video: editResult.video,
       isVideo: editResult.video,
       socialContent: editResult.social_content ?? [],
-      taskId: response.task_id,
       downloadAudio: async (outputPath?: string) => media.download(outputPath),
     };
+
+    if (response.task_id !== undefined) {
+      result.taskId = response.task_id;
+    }
 
     if (transcriptResult) {
       result.transcript = transcriptResult;
@@ -363,8 +362,9 @@ export class Cleanvoice {
     editId: string,
     attempt: number
   ): void {
-    const progress =
-      response.result && !('download_url' in response.result) ? response.result : undefined;
+    const progress = this.isProcessingProgress(response.result)
+      ? response.result
+      : undefined;
 
     if (pollingConfig.logProgress) {
       const percentage =
@@ -444,14 +444,71 @@ export class Cleanvoice {
   private buildFailureMessage(editId: string, response: RetrieveEditResponse): string {
     const result = response.result;
 
-    if (result && !('download_url' in result)) {
-      const detail = result.state || result.job_name;
+    if (result && typeof result === 'object') {
+      const detail = this.extractFailureDetail(result as Record<string, unknown>);
       if (detail) {
         return `Edit processing failed for ${editId}: ${detail}`;
       }
     }
 
     return `Edit processing failed for ${editId}`;
+  }
+
+  private isEditResult(
+    result: RetrieveEditResponse['result']
+  ): result is EditResult {
+    return Boolean(
+      result &&
+      typeof result === 'object' &&
+      'download_url' in result
+    );
+  }
+
+  private isProcessingProgress(
+    result: RetrieveEditResponse['result']
+  ): result is ProgressCallbackData['progress'] {
+    return Boolean(
+      result &&
+      typeof result === 'object' &&
+      'done' in result &&
+      'total' in result &&
+      'state' in result
+    );
+  }
+
+  private extractFailureDetail(result: Record<string, unknown>): string | undefined {
+    const message =
+      this.readFailureText(result.message) ||
+      this.readFailureText(result.error) ||
+      this.readFailureText(result.detail);
+    if (message) {
+      return message;
+    }
+
+    const nestedError = result.error;
+    if (nestedError && typeof nestedError === 'object') {
+      const nestedMessage =
+        this.readFailureText((nestedError as Record<string, unknown>).message) ||
+        this.readFailureText((nestedError as Record<string, unknown>).detail);
+      if (nestedMessage) {
+        return nestedMessage;
+      }
+    }
+
+    return (
+      this.readFailureText(result.state) ||
+      this.readFailureText(result.job_name) ||
+      undefined
+    );
+  }
+
+  private readFailureText(value: unknown): string | undefined {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
   }
 
   private buildCreateEditRequest(

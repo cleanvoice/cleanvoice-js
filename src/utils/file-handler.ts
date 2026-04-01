@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { createWriteStream, promises as fs } from 'fs';
-import { basename, extname } from 'path';
+import { basename, dirname, extname, join } from 'path';
 import { finished } from 'stream/promises';
 import {
   ApiError,
@@ -201,20 +201,25 @@ export async function downloadFile(
   }
 
   const outputPath = resolveDownloadDestination(url, destination);
+  const tempOutputPath = join(
+    dirname(outputPath),
+    `.${basename(outputPath)}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`
+  );
 
   try {
     const response = await axios.get<NodeJS.ReadableStream>(url, {
       responseType: 'stream',
       timeout: 300000,
     });
-    const stream = createWriteStream(outputPath);
+    const stream = createWriteStream(tempOutputPath);
 
     response.data.pipe(stream);
     await finished(stream);
+    await fs.rename(tempOutputPath, outputPath);
 
     return outputPath;
   } catch (error) {
-    await fs.unlink(outputPath).catch(() => undefined);
+    await fs.unlink(tempOutputPath).catch(() => undefined);
 
     if (error instanceof ApiError) {
       throw error;

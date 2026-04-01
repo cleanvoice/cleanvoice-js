@@ -58,7 +58,7 @@ describe('ApiClient', () => {
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': 'test-api-key',
-          'User-Agent': 'cleanvoice-js-sdk/3.0.0',
+          'User-Agent': 'cleanvoice-js-sdk/3.0.2',
       },
     });
     expect(mockedAxios.create).toHaveBeenNthCalledWith(2, {
@@ -66,7 +66,7 @@ describe('ApiClient', () => {
       maxBodyLength: Infinity,
       maxContentLength: Infinity,
       headers: {
-        'User-Agent': 'cleanvoice-js-sdk/3.0.0',
+        'User-Agent': 'cleanvoice-js-sdk/3.0.2',
       },
     });
   });
@@ -180,6 +180,30 @@ describe('ApiClient', () => {
         download_url: 'https://example.com/test.mp3',
       },
     });
+  });
+
+  it('does not retry ambiguous transport failures for non-idempotent requests', async () => {
+    mockRequestClient.request.mockRejectedValue(
+      createAxiosError({
+        request: {},
+      })
+    );
+
+    await expect(
+      apiClient.createEdit({
+        input: {
+          files: ['https://example.com/audio.mp3'],
+          config: {},
+        },
+      })
+    ).rejects.toEqual(
+      expect.objectContaining({
+        name: 'ApiError',
+        message: 'Network error: No response from server',
+      })
+    );
+
+    expect(mockRequestClient.request).toHaveBeenCalledTimes(1);
   });
 
   it('returns structured ApiError instances for HTTP failures', async () => {

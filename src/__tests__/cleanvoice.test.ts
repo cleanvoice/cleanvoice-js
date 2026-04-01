@@ -346,6 +346,23 @@ describe('Cleanvoice SDK', () => {
     expect(result.taskId).toBe('task-123');
   });
 
+  it('surfaces backend failure messages from getEdit responses', async () => {
+    const cv = new Cleanvoice({ apiKey: 'test-key' });
+    mockApiClient.createEdit.mockResolvedValue({ id: 'edit-123' });
+    mockApiClient.retrieveEdit.mockResolvedValue({
+      status: 'FAILURE',
+      task_id: 'task-123',
+      result: {
+        message: 'Processing failed upstream',
+        code: 'FAILED_JOB',
+      },
+    } as any);
+
+    await expect(cv.process('https://example.com/audio.mp3')).rejects.toThrow(
+      'Edit processing failed for edit-123: Processing failed upstream'
+    );
+  });
+
   it('creates an edit and returns the ID', async () => {
     const cv = new Cleanvoice({ apiKey: 'test-key' });
     mockApiClient.createEdit.mockResolvedValue({ id: 'edit-123' });
